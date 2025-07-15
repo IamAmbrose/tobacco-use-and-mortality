@@ -115,21 +115,29 @@ with tab3:
         st.pyplot(fig)
 
     else:
-        prediction = classifier.predict(X_input)[0]
-        prob = classifier.predict_proba(X_input)[0][1]
-        result = "⚠️ High Fatality" if prediction == 1 else "✅ Low Fatality"
+       else:
+    prediction = classifier.predict(X_input)[0]
+    prob = classifier.predict_proba(X_input)[0][1]
 
-        st.subheader(f"🔒 Classification: {result}")
-        st.write(f"Probability of High Fatality: **{prob:.2%}**")
+    if prediction == 1:
+        result_text = "**🔒 Prediction: HIGH FATALITY DEATHS**"
+        icon = "⚠️"
+    else:
+        result_text = "**✅ Prediction: LOW FATALITY DEATHS**"
+        icon = "✅"
 
-        fig, ax = plt.subplots()
-        ax.bar(['High Fatality Probability'], [prob], color='red')
-        ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
-        ax.set_ylim(0, 1)
-        ax.set_ylabel("Probability")
-        ax.set_title("High Fatality Probability")
-        ax.legend()
-        st.pyplot(fig)
+    st.subheader(f"{icon} {result_text}")
+    st.write(f"**Probability of High Fatality Deaths:** `{prob:.2%}`")
+
+    # Probability plot
+    fig, ax = plt.subplots()
+    ax.bar(['High Fatality Probability'], [prob], color='red')
+    ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("Probability")
+    ax.set_title("High Fatality Deaths Probability")
+    ax.legend()
+    st.pyplot(fig)
 
 st.write("---")
 st.caption("Built by **Ambrose** with Streamlit, Matplotlib, Seaborn & Random Forests.")
