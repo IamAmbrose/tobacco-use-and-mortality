@@ -1,9 +1,7 @@
 # app.py
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
-import shap
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -101,38 +99,37 @@ with tab3:
         if col not in X_input.columns:
             X_input[col] = 0
     X_input = X_input[feature_order]
-
     X_input = X_input.astype(float)
 
     if mode.startswith("Regression"):
-        prediction = regressor.predict(X_input)
-        st.subheader(f"📈 Predicted Death Rate: **{prediction[0]:.4f}**")
+        prediction = regressor.predict(X_input)[0]
+        st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-        explainer = shap.Explainer(regressor, X_input)
-        shap_values = explainer(X_input)
+        # Mean Death Rate for comparison
+        mean_death_rate = df['Death_Rate'].mean()
 
-        st.subheader("🔍 SHAP Feature Impact (Regression)")
-        fig4, ax4 = plt.subplots()
-        shap.plots.bar(shap_values[0], show=False)
-        plt.tight_layout()
-        st.pyplot(fig4)
+        fig, ax = plt.subplots()
+        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_death_rate], color=['blue', 'gray'])
+        ax.set_ylabel("Death Rate")
+        ax.set_title("Predicted vs Historical Mean Death Rate")
+        st.pyplot(fig)
 
     else:
-        prediction = classifier.predict(X_input)
+        prediction = classifier.predict(X_input)[0]
         prob = classifier.predict_proba(X_input)[0][1]
-        result = "⚠️ High Fatality" if prediction[0] == 1 else "✅ Low Fatality"
+        result = "⚠️ High Fatality" if prediction == 1 else "✅ Low Fatality"
 
         st.subheader(f"🔒 Classification: {result}")
         st.write(f"Probability of High Fatality: **{prob:.2%}**")
 
-        explainer = shap.Explainer(classifier, X_input)
-        shap_values = explainer(X_input)
-
-        st.subheader("🔍 SHAP Feature Impact (Classification)")
-        fig5, ax5 = plt.subplots()
-        shap.plots.bar(shap_values[0], show=False)
-        plt.tight_layout()
-        st.pyplot(fig5)
+        fig, ax = plt.subplots()
+        ax.bar(['High Fatality Probability'], [prob], color='red')
+        ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("Probability")
+        ax.set_title("High Fatality Probability")
+        ax.legend()
+        st.pyplot(fig)
 
 st.write("---")
-st.caption("Built by **Ambrose** with Streamlit, SHAP, Seaborn & Random Forests")
+st.caption("Built by **Ambrose** with Streamlit, Matplotlib, Seaborn & Random Forests.")
