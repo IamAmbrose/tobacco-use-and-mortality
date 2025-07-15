@@ -4,17 +4,21 @@ import pandas as pd
 import numpy as np
 import shap
 import joblib
+import matplotlib.pyplot as plt  
 
-# Load models & utils
+# Load trained models & scaler
 regressor = joblib.load('regressor.pkl')
 classifier = joblib.load('classifier.pkl')
 scaler = joblib.load('scaler.pkl')
 feature_order = joblib.load('feature_order.pkl')
 
-st.set_page_config(page_title="🚬 Tobacco Mortality ML App", layout="wide")
-st.title("🚬 Tobacco Use & Mortality Predictor")
+st.set_page_config(page_title="🚬 Tobacco Mortality Predictor", layout="wide")
+st.title("🚬 Tobacco Use & Mortality — ML Dashboard")
 
-mode = st.sidebar.selectbox("Choose Prediction Mode:", ["Regression (Death Rate)", "Classification (High Fatality)"])
+mode = st.sidebar.selectbox(
+    "Choose Prediction Mode:",
+    ["Regression (Death Rate)", "Classification (High Fatality)"]
+)
 
 st.sidebar.markdown("---")
 st.sidebar.header("Input Features")
@@ -46,7 +50,7 @@ X_input = pd.DataFrame({
 # One-hot encode
 X_input = pd.get_dummies(X_input, columns=['ICD10 Diagnosis', 'Diagnosis Type'])
 
-# Add any missing columns & reorder
+# Add any missing columns, reorder to match model
 for col in feature_order:
     if col not in X_input.columns:
         X_input[col] = 0
@@ -55,27 +59,37 @@ X_input = X_input[feature_order]
 # Scale
 X_scaled = scaler.transform(X_input)
 
-# Mode switch
+# --- Regression Mode ---
 if mode.startswith("Regression"):
     prediction = regressor.predict(X_scaled)
     st.subheader(f"📈 Predicted Death Rate: **{prediction[0]:.4f}**")
+
     explainer = shap.Explainer(regressor, X_scaled)
     shap_values = explainer(X_scaled)
-    st.subheader("🔍 SHAP Feature Impact (Regression)")
-    shap.plots.bar(shap_values[0])
-    st.pyplot(bbox_inches='tight')
 
+    st.subheader("🔍 SHAP Feature Impact (Regression)")
+    fig, ax = plt.subplots()
+    shap.plots.bar(shap_values[0], show=False)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+# --- Classification Mode ---
 else:
     prediction = classifier.predict(X_scaled)
     prob = classifier.predict_proba(X_scaled)[0][1]
     result = "⚠️ High Fatality" if prediction[0] == 1 else "✅ Low Fatality"
+
     st.subheader(f"🔒 Classification: {result}")
     st.write(f"Probability of High Fatality: **{prob:.2%}**")
+
     explainer = shap.Explainer(classifier, X_scaled)
     shap_values = explainer(X_scaled)
+
     st.subheader("🔍 SHAP Feature Impact (Classification)")
-    shap.plots.bar(shap_values[0])
-    st.pyplot(bbox_inches='tight')
+    fig, ax = plt.subplots()
+    shap.plots.bar(shap_values[0], show=False)
+    plt.tight_layout()
+    st.pyplot(fig)
 
 st.write("---")
-st.caption("Demo: Tobacco Use & Mortality Predictor — powered by Streamlit + RandomForest")
+st.caption("Demo: Tobacco Use & Mortality Predictor — powered by Streamlit + RandomForest + SHAP")
