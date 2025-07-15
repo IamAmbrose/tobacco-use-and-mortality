@@ -73,10 +73,17 @@ with tab2:
     st.pyplot(fig3)
 
     # ✅ Prescriptions
-    fig4, ax4 = plt.subplots(figsize=(8, 4))
-    sns.lineplot(data=df, x='Year', y='All Pharmacotherapy Prescriptions', hue='Sex', marker='o', ax=ax4)
-    ax4.set_title("Prescriptions Over Time by Sex")
-    st.pyplot(fig4)
+presc_trend = (
+    df.groupby(['Year', 'Sex'])['All Pharmacotherapy Prescriptions']
+    .mean()
+    .reset_index()
+)
+
+fig4, ax4 = plt.subplots(figsize=(8, 4))
+sns.lineplot(data=presc_trend, x='Year', y='All Pharmacotherapy Prescriptions',
+             hue='Sex', marker='o', ax=ax4)
+ax4.set_title("Average Prescriptions Over Time by Sex")
+st.pyplot(fig4)
 
 
 #  Predict
