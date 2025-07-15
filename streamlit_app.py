@@ -1,4 +1,5 @@
 # app.py
+# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -23,8 +24,7 @@ df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 # Tabs
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "🤖 Predict"])
 
-
-# ✅ Tab 1 — Overview
+# Tab 1 — Overview
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
@@ -41,7 +41,6 @@ with tab1:
     st.metric("Latest Death Rate", df['Death_Rate'].dropna().iloc[-1])
 
 # Tab 2 — EDA
-
 with tab2:
     st.header("📊 Exploratory Data Analysis")
 
@@ -62,8 +61,7 @@ with tab2:
     ax3.set_title("Death Rate Distribution")
     st.pyplot(fig3)
 
-#  Tab 3 — Predict
-
+# Tab 3 — Predict
 with tab3:
     st.header("🤖 Predict Mortality / Fatality")
 
@@ -104,6 +102,8 @@ with tab3:
             X_input[col] = 0
     X_input = X_input[feature_order]
 
+    X_input = X_input.astype(float)
+
     if mode.startswith("Regression"):
         prediction = regressor.predict(X_input)
         st.subheader(f"📈 Predicted Death Rate: **{prediction[0]:.4f}**")
@@ -135,4 +135,4 @@ with tab3:
         st.pyplot(fig5)
 
 st.write("---")
-st.caption("Built by Ambrose using Streamlit, SHAP, Seaborn & Random Forests — no scaling needed!")
+st.caption("Built by **Ambrose** with Streamlit, SHAP, Seaborn & Random Forests")
