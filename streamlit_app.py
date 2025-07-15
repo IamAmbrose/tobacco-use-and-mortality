@@ -116,7 +116,7 @@ with tab3:
 
     #  Show which dummy fired
     active_dummies = [col for col in X_input.columns if (col.startswith("ICD10 Diagnosis_") or col.startswith("Diagnosis Type_")) and X_input[col].iloc[0] == 1]
-    st.write(" Active ICD10/Diagnosis dummy columns:", active_dummies)
+   st.write(" Active ICD10/Diagnosis dummy columns:", active_dummies)
     st.write(" Sum of row:", X_input.sum(axis=1))
 
     #  Make prediction
