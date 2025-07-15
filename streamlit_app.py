@@ -5,40 +5,45 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# CONFIG
+
+#  CONFIG
 st.set_page_config(page_title="🚬 Tobacco Use & Mortality Dashboard", layout="wide")
-st.title("🚬 Tobacco Use & Mortality — Final Dashboard")
+st.title("🚬 Tobacco Use & Mortality — Final Predictive Dashboard")
 
 # LOAD MODELS
 regressor = joblib.load('regressor.pkl')
 feature_order = joblib.load('feature_order.pkl')
 
 # LOAD DATA
-
 df = pd.read_csv("merged_dataset.csv")
 
 # Clean column names: title case, strip newlines
 df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip().str.title()
 
-# Fix known column name
 df.rename(columns={'Value_fat': 'Value_Fat', 'Value_adm': 'Value_Adm'}, inplace=True)
 
 df['Sex'] = df['Sex'].astype(str).str.strip().str.title()
 
-#TABS
 
+#  Extract real dropdown options directly from feature_order
+icd10_cols = [c for c in feature_order if c.startswith('ICD10 Diagnosis_')]
+diag_type_cols = [c for c in feature_order if c.startswith('Diagnosis Type_')]
+
+diagnosis_options = sorted(list(set([c.replace('ICD10 Diagnosis_', '') for c in icd10_cols])))
+diagnosis_type_options = sorted(list(set([c.replace('Diagnosis Type_', '') for c in diag_type_cols])))
+
+
+# TABS
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "📈 Predict"])
 
-
 # Overview
+
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
     This dashboard analyzes **tobacco use**, **pricing**, **household income**, and **mortality trends** in the UK (2004–2015).
 
-    **Features:** Smoking Prevalence, Prices, Income, ICD10 Diagnosis.
-
-    👉 Predict **Death Rate** with robust input  
+    👉 Predict **Death Rate** robustly  
     👉 Compare trends for **Male vs Female**
     """)
 
@@ -67,7 +72,7 @@ with tab2:
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
-    # Group prescriptions to avoid overlaps
+    #  Group prescriptions trend by Year + Sex
     presc_trend = (
         df.groupby(['Year', 'Sex'])['All Pharmacotherapy Prescriptions']
         .mean().reset_index()
@@ -79,7 +84,7 @@ with tab2:
     ax4.set_title("Average Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-#  Predict — Regression only
+#  Predict — Regression only, 100% aligned
 with tab3:
     st.header("📈 Predict Death Rate")
 
@@ -92,32 +97,6 @@ with tab3:
     interaction = st.sidebar.number_input('SmokingPrice Interaction', 0.0, 100000.0, 15055.8)
     sex_male = st.sidebar.radio('Sex: Male?', ['Yes', 'No']) == 'Yes'
     policy_pre2010 = st.sidebar.radio('Policy Era: Pre-2010?', ['Yes', 'No']) == 'Yes'
-
-    #  Safe drop-downs for consistent keys
-    diagnosis_options = [
-        'Age Related Cataract 45+',
-        'All admissions',
-        'All cancers',
-        'All circulatory diseases',
-        'All deaths',
-        'All diseases of the digestive system',
-        'All diseases which can be caused by smoking',
-        'All respiratory diseases',
-        'Bladder',
-        'Cervical',
-        'Stomach',
-        'Trachea, Lung, Bronchus'
-    ]
-
-    diagnosis_type_options = [
-        'All admissions',
-        'All cancers',
-        'All circulatory diseases',
-        'All deaths',
-        'All diseases which can be caused by smoking',
-        'All respiratory diseases',
-        'Cancers which can be caused by smoking'
-    ]
 
     diag = st.sidebar.selectbox('ICD10 Diagnosis', diagnosis_options)
     diag_type = st.sidebar.selectbox('Diagnosis Type', diagnosis_type_options)
@@ -134,20 +113,17 @@ with tab3:
         'Diagnosis Type': [diag_type]
     })
 
-    #  One-hot encode
     X_input = pd.get_dummies(X_input, columns=['ICD10 Diagnosis', 'Diagnosis Type'])
 
-    #  Fill any missing dummies
     for col in feature_order:
         if col not in X_input.columns:
             X_input[col] = 0
 
-    # Reorder & cast
     X_input = X_input[feature_order].astype(float)
 
-    #  Debug check
-    st.write(" Final X_input shape:", X_input.shape)
-    st.write(" Final X_input columns:", X_input.columns.tolist())
+    # ✅ Debug
+    st.write("👉 Expected model features:", feature_order)
+    st.write("👉 X_input columns:", X_input.columns.tolist())
 
     prediction = regressor.predict(X_input)[0]
     st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
@@ -158,7 +134,6 @@ with tab3:
     ax.set_ylabel("Death Rate")
     ax.set_title("Predicted vs Historical Mean Death Rate")
     st.pyplot(fig)
-
 
 st.write("---")
 st.caption("Built by **Ambrose** with Streamlit, Matplotlib, Seaborn & Random Forests.")
