@@ -45,12 +45,12 @@ with tab1:
 
     st.metric("Latest Smoking Prevalence (%)", df['Smoking Prevalence'].iloc[-1])
     st.metric("Latest Tobacco Price Index", df['Tobacco Price Index'].iloc[-1])
-    st.metric("Latest Fatalities", df['Value_fat'].dropna().iloc[-1])
+    st.metric("Latest Fatalities", df['Value_Fat'].dropna().iloc[-1])
 
 #  EDA
 
 with tab2:
-    st.header("📊 Exploratory Data Analysis by Sex")
+    st.header("📊 Exploratory Data Analysis")
 
     st.write("✅ Unique Sex values:", df['Sex'].unique())
 
