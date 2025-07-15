@@ -5,40 +5,38 @@ import joblib
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-#  CONFIG
-
+# CONFIG
 st.set_page_config(page_title="🚬 Tobacco Use & Mortality Dashboard", layout="wide")
 st.title("🚬 Tobacco Use & Mortality — FINAL PREDICTIVE DASHBOARD")
 
-#  LOAD MODELS & DATA
+#LOAD MODELS & DATA
 regressor = joblib.load("regressor.pkl")
 feature_order = joblib.load("feature_order.pkl")
 df = pd.read_csv("merged_dataset.csv")
 
-#  Clean column names (just strip, no title-casing!)
+#  Clean column names — only strip spaces, never change case!
 df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 df.rename(columns={"Value_fat": "Value_Fat", "Value_adm": "Value_Adm"}, inplace=True)
 df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
 
-#  Extract dropdown options directly from feature_order
+# Extract dropdown options directly from your feature_order
 icd10_cols = [c for c in feature_order if c.startswith("ICD10 Diagnosis_")]
 diag_type_cols = [c for c in feature_order if c.startswith("Diagnosis Type_")]
 
-diagnosis_options = sorted(list(set(c.replace("ICD10 Diagnosis_", "") for c in icd10_cols)))
-diagnosis_type_options = sorted(list(set(c.replace("Diagnosis Type_", "") for c in diag_type_cols)))
+diagnosis_options = sorted({c.replace("ICD10 Diagnosis_", "") for c in icd10_cols})
+diagnosis_type_options = sorted({c.replace("Diagnosis Type_", "") for c in diag_type_cols})
 
-#  TABS
+#TABS 
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "📈 Predict"])
 
 # OVERVIEW
-
 with tab1:
     st.header("📌 Project Overview")
     st.markdown(
         """
         This dashboard analyzes **tobacco use**, **pricing**, **household income**, and **mortality trends** in the UK (2004–2015).
 
-        👉 Predict **Death Rate** robustly  
+        👉 Predict **Death Rate**  
         👉 Compare trends for **Male vs Female**
         """
     )
@@ -46,7 +44,7 @@ with tab1:
     st.metric("Latest Tobacco Price Index", df["Tobacco Price Index"].iloc[-1])
     st.metric("Latest Fatalities", df["Value_Fat"].dropna().iloc[-1])
 
-#  EDA
+# EDA
 with tab2:
     st.header("📊 Exploratory Data Analysis")
 
@@ -76,7 +74,7 @@ with tab2:
     ax4.set_title("Average Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-#  PREDICT TAB 
+# PREDICT TAB — FINAL VERSION
 with tab3:
     st.header("📈 Predict Death Rate")
 
@@ -93,6 +91,7 @@ with tab3:
     diag = st.sidebar.selectbox("ICD10 Diagnosis", diagnosis_options)
     diag_type = st.sidebar.selectbox("Diagnosis Type", diagnosis_type_options)
 
+    #  Build input DataFrame
     X_input = pd.DataFrame({
         "Smoking Prevalence": [smoking_prev],
         "Tobacco Price Index": [tobacco_price],
@@ -105,18 +104,22 @@ with tab3:
         "Diagnosis Type": [diag_type]
     })
 
+    #  One-hot encode exactly
     X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
 
-    # Fill missing dummy columns
+    #  Fill missing dummy columns
     for col in feature_order:
         if col not in X_input.columns:
             X_input[col] = 0
 
     X_input = X_input[feature_order].astype(float)
 
-    st.write("✅ Input preview:", X_input)
-    st.write("✅ Sum of row (should include dummy):", X_input.sum(axis=1))
+    #  Show which dummy fired
+    active_dummies = [col for col in X_input.columns if (col.startswith("ICD10 Diagnosis_") or col.startswith("Diagnosis Type_")) and X_input[col].iloc[0] == 1]
+    st.write(" Active ICD10/Diagnosis dummy columns:", active_dummies)
+    st.write(" Sum of row:", X_input.sum(axis=1))
 
+    #  Make prediction
     prediction = regressor.predict(X_input)[0]
     st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
@@ -128,4 +131,5 @@ with tab3:
     st.pyplot(fig)
 
 st.write("---")
-st.caption("Built by **Ambrose** with Streamlit, Matplotlib, Seaborn & Random Forests.")
+st.caption("✅ Built by **Ambrose** — Streamlit, Matplotlib, Seaborn, Random Forest ")
+
