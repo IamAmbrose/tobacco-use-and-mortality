@@ -55,28 +55,29 @@ with tab2:
     st.write("✅ Unique Sex values:", df['Sex'].unique())
 
     # ✅ Smoking Prevalence
-    fig1, ax1 = plt.subplots()
+    fig1, ax1 = plt.subplots(figsize=(8, 4))
     sns.lineplot(data=df, x='Year', y='Smoking Prevalence', hue='Sex', marker='o', ax=ax1)
     ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
     # ✅ Admissions
-    fig2, ax2 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value_adm', hue='Sex', marker='o', ax=ax2)
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    sns.lineplot(data=df, x='Year', y='Value_Adm', hue='Sex', marker='o', ax=ax2)
     ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
     # ✅ Fatalities
-    fig3, ax3 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value_fat', hue='Sex', marker='o', ax=ax3)
+    fig3, ax3 = plt.subplots(figsize=(8, 4))
+    sns.lineplot(data=df, x='Year', y='Value_Fat', hue='Sex', marker='o', ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
     # ✅ Prescriptions
-    fig4, ax4 = plt.subplots()
+    fig4, ax4 = plt.subplots(figsize=(8, 4))
     sns.lineplot(data=df, x='Year', y='All Pharmacotherapy Prescriptions', hue='Sex', marker='o', ax=ax4)
     ax4.set_title("Prescriptions Over Time by Sex")
     st.pyplot(fig4)
+
 
 #  Predict
 with tab3:
