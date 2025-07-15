@@ -124,7 +124,7 @@ with tab3:
         prediction = regressor.predict(X_input)[0]
         st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-        mean_fatalities = df['Value_fat'].mean()
+        mean_fatalities = df['Value_Fat'].mean()
         fig, ax = plt.subplots()
         ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_fatalities], color=['blue', 'gray'])
         ax.set_ylabel("Fatalities")
