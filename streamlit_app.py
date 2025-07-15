@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,72 +5,78 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Config
-st.set_page_config(page_title="🚬 Tobacco Mortality Dashboard", layout="wide")
+#  CONFIG
+
+st.set_page_config(page_title="🚬 Tobacco Use & Mortality Dashboard", layout="wide")
 st.title("🚬 Tobacco Use & Mortality — Interactive Dashboard")
 
-# Load models & feature order
+
 regressor = joblib.load('regressor.pkl')
 classifier = joblib.load('classifier.pkl')
 feature_order = joblib.load('feature_order.pkl')
 
-# Load dataset for EDA
-df = pd.read_csv("merged_featured.csv")
-df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 
-# Tabs
+# LOAD DATA
+
+df = pd.read_csv("merged_dataset.csv")
+
+#  Clean columns: flatten \n, trim spaces
+df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip().str.title()
+
+# Make sure Sex column is clean
+df['Sex'] = df['Sex'].astype(str).str.strip().str.title()
+
+
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "🤖 Predict"])
 
-# Tab 1 — Overview
+# Overview
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
-    This dashboard analyzes **tobacco use**, **pricing**, **household income**, and **mortality** in the UK (2004–2015).
+    This dashboard analyzes **tobacco use**, **pricing**, **household income**, and **mortality trends** in the UK (2004–2015).
 
     **Features:** Smoking Prevalence, Tobacco/Retail Prices, Income, ICD10 Diagnosis.
 
-    👉 Predict **Death Rate** or classify **High vs Low Fatality**.  
-    👉 Visualize how price & policy impact outcomes.
+    👉 Predict **Death Rate** or classify **High vs Low Fatality**  
+    👉 Compare trends for **Male vs Female**
     """)
 
     st.metric("Latest Smoking Prevalence (%)", df['Smoking Prevalence'].iloc[-1])
     st.metric("Latest Tobacco Price Index", df['Tobacco Price Index'].iloc[-1])
-    st.metric("Latest Death Rate", df['Death_Rate'].dropna().iloc[-1])
+    st.metric("Latest Fatalities", df['Value Fat'].dropna().iloc[-1])
 
-# Tab 2 — EDA
+
+# EDA
 with tab2:
-    st.header("📊 Exploratory Data Analysis")
+    st.header("📊 Exploratory Data Analysis by Sex")
 
-    # Clean Sex
-    df['Sex'] = df['Sex'].str.strip()
+    st.write("✅ Unique Sex values:", df['Sex'].unique())
 
-    # 1️⃣ Smoking Prevalence over time by Sex
+    # ✅ Smoking Prevalence
     fig1, ax1 = plt.subplots()
     sns.lineplot(data=df, x='Year', y='Smoking Prevalence', hue='Sex', marker='o', ax=ax1)
     ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
-    # 2️⃣ Admissions over time by Sex
+    # ✅ Admissions
     fig2, ax2 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value_adm', hue='Sex', marker='o', ax=ax2)
+    sns.lineplot(data=df, x='Year', y='Value Adm', hue='Sex', marker='o', ax=ax2)
     ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
-    # 3️⃣ Fatalities over time by Sex
+    # ✅ Fatalities
     fig3, ax3 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value_fat', hue='Sex', marker='o', ax=ax3)
+    sns.lineplot(data=df, x='Year', y='Value Fat', hue='Sex', marker='o', ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
-    # 4️⃣ All Pharmacotherapy Prescriptions over time by Sex
+    # ✅ Prescriptions
     fig4, ax4 = plt.subplots()
     sns.lineplot(data=df, x='Year', y='All Pharmacotherapy Prescriptions', hue='Sex', marker='o', ax=ax4)
     ax4.set_title("Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-
-# Tab 3 — Predict
-# Predict Tab (inside with tab3:)
+# Predict
 with tab3:
     st.header("🤖 Predict Mortality / Fatality")
 
@@ -80,7 +85,6 @@ with tab3:
         ["Regression (Death Rate)", "Classification (High Fatality)"]
     )
 
-    st.sidebar.markdown("---")
     st.sidebar.header("Input Features")
 
     smoking_prev = st.sidebar.slider('Smoking Prevalence (%)', 0.0, 50.0, 23.0)
@@ -99,13 +103,14 @@ with tab3:
         'Tobacco Price Index': [tobacco_price],
         'Retail Prices Index': [retail_price],
         "Real Households' Disposable Income": [income],
-        'SmokingPrice_Interaction': [interaction],
+        'Smokingprice Interaction': [interaction],
         'Sex_Male': [int(sex_male)],
         'Policy_Era_Pre-2010': [int(policy_pre2010)],
         'ICD10 Diagnosis': [diag],
         'Diagnosis Type': [diag_type]
     })
 
+    # One-hot encode categories
     X_input = pd.get_dummies(X_input, columns=['ICD10 Diagnosis', 'Diagnosis Type'])
     for col in feature_order:
         if col not in X_input.columns:
@@ -117,12 +122,11 @@ with tab3:
         prediction = regressor.predict(X_input)[0]
         st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-        mean_death_rate = df['Death_Rate'].mean()
-
+        mean_death = df['Value Fat'].mean()
         fig, ax = plt.subplots()
-        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_death_rate], color=['blue', 'gray'])
+        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_death], color=['blue', 'gray'])
         ax.set_ylabel("Death Rate")
-        ax.set_title("Predicted vs Historical Mean Death Rate")
+        ax.set_title("Predicted vs Historical Mean")
         st.pyplot(fig)
 
     else:
@@ -144,7 +148,7 @@ with tab3:
         ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
         ax.set_ylim(0, 1)
         ax.set_ylabel("Probability")
-        ax.set_title("High Fatality Deaths Probability")
+        ax.set_title("High Fatality Probability")
         ax.legend()
         st.pyplot(fig)
 
