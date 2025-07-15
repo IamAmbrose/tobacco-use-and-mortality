@@ -40,7 +40,7 @@ with tab1:
 
 # Tab 2 — EDA
 with tab2:
-    st.header("📊 Exploratory Data Analysis by Sex")
+    st.header("📊 Exploratory Data Analysis")
 
     # Clean Sex
     df['Sex'] = df['Sex'].str.strip()
