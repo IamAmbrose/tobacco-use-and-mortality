@@ -92,7 +92,16 @@ with tab3:
     diag_type = st.sidebar.selectbox("Diagnosis Type", diagnosis_type_options)
 
     #  Build input DataFrame
-    X_input = pd.DataFrame({
+    
+st.set_page_config(page_title=" Final Test", layout="centered")
+st.title(" FINAL TEST — HARD CODED ROW")
+
+# Load
+regressor = joblib.load("regressor.pkl")
+feature_order = joblib.load("feature_order.pkl")
+
+# Exact test row
+X_input = pd.DataFrame({
     "Smoking Prevalence": [23],
     "Tobacco Price Index": [654.6],
     "Retail Prices Index": [279.3],
@@ -104,19 +113,24 @@ with tab3:
     "Diagnosis Type": ["All cancers"]
 })
 
+# Encode
 X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
 
+# Fill missing
 for col in feature_order:
     if col not in X_input.columns:
         X_input[col] = 0
 
 X_input = X_input[feature_order].astype(float)
 
-active_dummies = [col for col in X_input.columns if (col.startswith("ICD10") or col.startswith("Diagnosis Type")) and X_input[col].iloc[0] == 1]
-st.write("✅ Active ICD10/Diagnosis dummy columns:", active_dummies)
+# Debug
+active_dummies = [c for c in X_input.columns if X_input[c].iloc[0] == 1]
+st.write(" Active dummies:", active_dummies)
 
+# Predict
 prediction = regressor.predict(X_input)[0]
-st.subheader(f"📈 Predicted Death Rate: **{prediction:.4f}**")
+st.subheader(f" Final test prediction: {prediction:.4f}")
+
 
     mean_fatalities = df["Value_Fat"].mean()
     fig, ax = plt.subplots(figsize=(6, 3))
