@@ -93,35 +93,30 @@ with tab3:
 
     #  Build input DataFrame
     X_input = pd.DataFrame({
-        "Smoking Prevalence": [smoking_prev],
-        "Tobacco Price Index": [tobacco_price],
-        "Retail Prices Index": [retail_price],
-        "Real Households' Disposable Income": [income],
-        "SmokingPrice_Interaction": [interaction],
-        "Sex_Male": [int(sex_male)],
-        "Policy_Era_Pre-2010": [int(policy_pre2010)],
-        "ICD10 Diagnosis": [diag],
-        "Diagnosis Type": [diag_type]
-    })
+    "Smoking Prevalence": [23],
+    "Tobacco Price Index": [654.6],
+    "Retail Prices Index": [279.3],
+    "Real Households' Disposable Income": [188.7],
+    "SmokingPrice_Interaction": [15055.8],
+    "Sex_Male": [1],
+    "Policy_Era_Pre-2010": [1],
+    "ICD10 Diagnosis": ["All cancers"],
+    "Diagnosis Type": ["All cancers"]
+})
 
-    #  One-hot encode exactly
-    X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
+X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
 
-    #  Fill missing dummy columns
-    for col in feature_order:
-        if col not in X_input.columns:
-            X_input[col] = 0
+for col in feature_order:
+    if col not in X_input.columns:
+        X_input[col] = 0
 
-    X_input = X_input[feature_order].astype(float)
+X_input = X_input[feature_order].astype(float)
 
-    #  Show which dummy fired
-    active_dummies = [col for col in X_input.columns if (col.startswith("ICD10 Diagnosis_") or col.startswith("Diagnosis Type_")) and X_input[col].iloc[0] == 1]
-   st.write(" Active ICD10/Diagnosis dummy columns:", active_dummies)
-    st.write(" Sum of row:", X_input.sum(axis=1))
+active_dummies = [col for col in X_input.columns if (col.startswith("ICD10") or col.startswith("Diagnosis Type")) and X_input[col].iloc[0] == 1]
+st.write("✅ Active ICD10/Diagnosis dummy columns:", active_dummies)
 
-    #  Make prediction
-    prediction = regressor.predict(X_input)[0]
-    st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
+prediction = regressor.predict(X_input)[0]
+st.subheader(f"📈 Predicted Death Rate: **{prediction:.4f}**")
 
     mean_fatalities = df["Value_Fat"].mean()
     fig, ax = plt.subplots(figsize=(6, 3))
