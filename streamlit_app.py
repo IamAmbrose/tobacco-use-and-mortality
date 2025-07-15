@@ -60,6 +60,7 @@ with tab2:
     st.pyplot(fig3)
 
 # Tab 3 — Predict
+# Predict Tab (inside with tab3:)
 with tab3:
     st.header("🤖 Predict Mortality / Fatality")
 
@@ -105,7 +106,6 @@ with tab3:
         prediction = regressor.predict(X_input)[0]
         st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-        # Mean Death Rate for comparison
         mean_death_rate = df['Death_Rate'].mean()
 
         fig, ax = plt.subplots()
@@ -115,29 +115,28 @@ with tab3:
         st.pyplot(fig)
 
     else:
-       else:
-    prediction = classifier.predict(X_input)[0]
-    prob = classifier.predict_proba(X_input)[0][1]
+        prediction = classifier.predict(X_input)[0]
+        prob = classifier.predict_proba(X_input)[0][1]
 
-    if prediction == 1:
-        result_text = "**🔒 Prediction: HIGH FATALITY DEATHS**"
-        icon = "⚠️"
-    else:
-        result_text = "**✅ Prediction: LOW FATALITY DEATHS**"
-        icon = "✅"
+        if prediction == 1:
+            result_text = "**🔒 Prediction: HIGH FATALITY DEATHS**"
+            icon = "⚠️"
+        else:
+            result_text = "**✅ Prediction: LOW FATALITY DEATHS**"
+            icon = "✅"
 
-    st.subheader(f"{icon} {result_text}")
-    st.write(f"**Probability of High Fatality Deaths:** `{prob:.2%}`")
+        st.subheader(f"{icon} {result_text}")
+        st.write(f"**Probability of High Fatality Deaths:** `{prob:.2%}`")
 
-    # Probability plot
-    fig, ax = plt.subplots()
-    ax.bar(['High Fatality Probability'], [prob], color='red')
-    ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
-    ax.set_ylim(0, 1)
-    ax.set_ylabel("Probability")
-    ax.set_title("High Fatality Deaths Probability")
-    ax.legend()
-    st.pyplot(fig)
+        fig, ax = plt.subplots()
+        ax.bar(['High Fatality Probability'], [prob], color='red')
+        ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("Probability")
+        ax.set_title("High Fatality Deaths Probability")
+        ax.legend()
+        st.pyplot(fig)
+
 
 st.write("---")
 st.caption("Built by **Ambrose** with Streamlit, Matplotlib, Seaborn & Random Forests.")
