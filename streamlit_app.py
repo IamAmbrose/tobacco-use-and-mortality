@@ -6,30 +6,32 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #  CONFIG
-
 st.set_page_config(page_title="🚬 Tobacco Use & Mortality Dashboard", layout="wide")
 st.title("🚬 Tobacco Use & Mortality — Interactive Dashboard")
 
+# LOAD MODELS
 
 regressor = joblib.load('regressor.pkl')
 classifier = joblib.load('classifier.pkl')
 feature_order = joblib.load('feature_order.pkl')
 
-
-# LOAD DATA
-
+#  LOAD DATA
 df = pd.read_csv("merged_dataset.csv")
 
-#  Clean columns: flatten \n, trim spaces
-df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip().str.title()
+# Clean up column names: remove newlines, extra spaces, title case
+df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip().str.replace('_', '_').str.title()
 
-# Make sure Sex column is clean
+df.rename(columns={
+    'Value_fat': 'Value_fat',
+    'Value_adm': 'Value_adm'
+}, inplace=True)
+
 df['Sex'] = df['Sex'].astype(str).str.strip().str.title()
 
-
+#  TABS
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "🤖 Predict"])
 
-# Overview
+#  Overview
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
@@ -43,10 +45,10 @@ with tab1:
 
     st.metric("Latest Smoking Prevalence (%)", df['Smoking Prevalence'].iloc[-1])
     st.metric("Latest Tobacco Price Index", df['Tobacco Price Index'].iloc[-1])
-    st.metric("Latest Fatalities", df['Value Fat'].dropna().iloc[-1])
+    st.metric("Latest Fatalities", df['Value_fat'].dropna().iloc[-1])
 
+#  EDA
 
-# EDA
 with tab2:
     st.header("📊 Exploratory Data Analysis by Sex")
 
@@ -60,13 +62,13 @@ with tab2:
 
     # ✅ Admissions
     fig2, ax2 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value Adm', hue='Sex', marker='o', ax=ax2)
+    sns.lineplot(data=df, x='Year', y='Value_adm', hue='Sex', marker='o', ax=ax2)
     ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
     # ✅ Fatalities
     fig3, ax3 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Value Fat', hue='Sex', marker='o', ax=ax3)
+    sns.lineplot(data=df, x='Year', y='Value_fat', hue='Sex', marker='o', ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
@@ -76,7 +78,7 @@ with tab2:
     ax4.set_title("Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-# Predict
+#  Predict
 with tab3:
     st.header("🤖 Predict Mortality / Fatality")
 
@@ -110,7 +112,6 @@ with tab3:
         'Diagnosis Type': [diag_type]
     })
 
-    # One-hot encode categories
     X_input = pd.get_dummies(X_input, columns=['ICD10 Diagnosis', 'Diagnosis Type'])
     for col in feature_order:
         if col not in X_input.columns:
@@ -122,11 +123,11 @@ with tab3:
         prediction = regressor.predict(X_input)[0]
         st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-        mean_death = df['Value Fat'].mean()
+        mean_fatalities = df['Value_fat'].mean()
         fig, ax = plt.subplots()
-        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_death], color=['blue', 'gray'])
-        ax.set_ylabel("Death Rate")
-        ax.set_title("Predicted vs Historical Mean")
+        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_fatalities], color=['blue', 'gray'])
+        ax.set_ylabel("Fatalities")
+        ax.set_title("Predicted vs Historical Mean Fatalities")
         st.pyplot(fig)
 
     else:
