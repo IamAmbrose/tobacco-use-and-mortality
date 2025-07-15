@@ -81,12 +81,7 @@ with tab2:
 
 #  Predict
 with tab3:
-    st.header("🤖 Predict Mortality / Fatality")
-
-    mode = st.sidebar.selectbox(
-        "Choose Prediction Mode:",
-        ["Regression (Death Rate)", "Classification (High Fatality)"]
-    )
+    st.header("📈 Predict Death Rate")
 
     st.sidebar.header("Input Features")
 
@@ -100,7 +95,6 @@ with tab3:
     diag = st.sidebar.text_input('ICD10 Diagnosis', 'All cancers')
     diag_type = st.sidebar.text_input('Diagnosis Type', 'All cancers')
 
-    # Create input DataFrame
     X_input = pd.DataFrame({
         'Smoking Prevalence': [smoking_prev],
         'Tobacco Price Index': [tobacco_price],
@@ -120,39 +114,19 @@ with tab3:
     X_input = X_input[feature_order]
     X_input = X_input.astype(float)
 
-    if mode.startswith("Regression"):
-        prediction = regressor.predict(X_input)[0]
-        st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
+    # ✅ Predict
+    prediction = regressor.predict(X_input)[0]
 
-        mean_fatalities = df['Value_Fat'].mean()
-        fig, ax = plt.subplots()
-        ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_fatalities], color=['blue', 'gray'])
-        ax.set_ylabel("Fatalities")
-        ax.set_title("Predicted vs Historical Mean Fatalities")
-        st.pyplot(fig)
+    st.subheader(f"📈 Predicted Death Rate: **{prediction:.2f}**")
 
-    else:
-        prediction = classifier.predict(X_input)[0]
-        prob = classifier.predict_proba(X_input)[0][1]
+    mean_fatalities = df['Value_Fat'].mean()
 
-        if prediction == 1:
-            result_text = "**🔒 Prediction: HIGH FATALITY DEATHS**"
-            icon = "⚠️"
-        else:
-            result_text = "**✅ Prediction: LOW FATALITY DEATHS**"
-            icon = "✅"
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.bar(['Predicted', 'Historical Mean'], [prediction, mean_fatalities], color=['blue', 'gray'])
+    ax.set_ylabel("Death Rate")
+    ax.set_title("Predicted vs Historical Mean Death Rate")
+    st.pyplot(fig)
 
-        st.subheader(f"{icon} {result_text}")
-        st.write(f"**Probability of High Fatality Deaths:** `{prob:.2%}`")
-
-        fig, ax = plt.subplots()
-        ax.bar(['High Fatality Probability'], [prob], color='red')
-        ax.axhline(0.5, color='gray', linestyle='--', label='Threshold')
-        ax.set_ylim(0, 1)
-        ax.set_ylabel("Probability")
-        ax.set_title("High Fatality Probability")
-        ax.legend()
-        st.pyplot(fig)
 
 
 st.write("---")
