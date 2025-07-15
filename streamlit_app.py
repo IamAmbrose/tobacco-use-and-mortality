@@ -82,7 +82,7 @@ presc_trend = (
 fig4, ax4 = plt.subplots(figsize=(8, 4))
 sns.lineplot(data=presc_trend, x='Year', y='All Pharmacotherapy Prescriptions',
              hue='Sex', marker='o', ax=ax4)
-ax4.set_title("Average Prescriptions Over Time by Sex")
+ax4.set_title("Average Prescriptions Over Time ")
 st.pyplot(fig4)
 
 
