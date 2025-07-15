@@ -40,41 +40,35 @@ with tab1:
 
 # Tab 2 — EDA
 with tab2:
-    st.header("📊 Exploratory Data Analysis")
+    st.header("📊 Exploratory Data Analysis by Sex")
 
-    # 1️⃣ Trend line — Smoking Prevalence over time by Sex
+    # Clean Sex
+    df['Sex'] = df['Sex'].str.strip()
+
+    # 1️⃣ Smoking Prevalence over time by Sex
     fig1, ax1 = plt.subplots()
-    df['Sex'] = df['Sex_Male'].map({1: 'Male', 0: 'Female'})
     sns.lineplot(data=df, x='Year', y='Smoking Prevalence', hue='Sex', marker='o', ax=ax1)
     ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
-    # 2️⃣ Trend line — Death Rate over time by Sex
+    # 2️⃣ Admissions over time by Sex
     fig2, ax2 = plt.subplots()
-    sns.lineplot(data=df, x='Year', y='Death_Rate', hue='Sex', marker='o', ax=ax2)
-    ax2.set_title("Death Rate Over Time by Sex")
+    sns.lineplot(data=df, x='Year', y='Value_adm', hue='Sex', marker='o', ax=ax2)
+    ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
-    # 3️⃣ Average Death Rate by Sex (bar)
-    avg_death = df.groupby('Sex')['Death_Rate'].mean().reset_index()
-
+    # 3️⃣ Fatalities over time by Sex
     fig3, ax3 = plt.subplots()
-    sns.barplot(data=avg_death, x='Sex', y='Death_Rate', palette=['#1f77b4', '#ff7f0e'], ax=ax3)
-    ax3.set_title("Average Death Rate by Sex")
+    sns.lineplot(data=df, x='Year', y='Value_fat', hue='Sex', marker='o', ax=ax3)
+    ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
-    # Existing EDA charts — keep yours too!
-    numeric_cols = df.select_dtypes(include=[np.number])
-    corr = numeric_cols.corr()
-    fig4, ax4 = plt.subplots(figsize=(10, 6))
-    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax4)
-    ax4.set_title("Correlation Heatmap")
+    # 4️⃣ All Pharmacotherapy Prescriptions over time by Sex
+    fig4, ax4 = plt.subplots()
+    sns.lineplot(data=df, x='Year', y='All Pharmacotherapy Prescriptions', hue='Sex', marker='o', ax=ax4)
+    ax4.set_title("Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-    fig5, ax5 = plt.subplots()
-    sns.histplot(df['Death_Rate'].dropna(), bins=30, kde=True, ax=ax5, color="red")
-    ax5.set_title("Death Rate Distribution")
-    st.pyplot(fig5)
 
 # Tab 3 — Predict
 # Predict Tab (inside with tab3:)
