@@ -5,28 +5,36 @@ import joblib
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# CONFIG
+# ----------------------------------------------------------
+# ✅ CONFIG
+# ----------------------------------------------------------
 st.set_page_config(page_title="🚬 Tobacco Use & Mortality Dashboard", layout="wide")
-st.title("🚬 Tobacco Use & Mortality — FINAL PREDICTIVE DASHBOARD")
+st.title("🚬 Tobacco Use & Mortality — FINAL DASHBOARD (DUAL DATASETS)")
 
-#LOAD MODELS & DATA
+# LOAD MODELS & BOTH DATASETS
 regressor = joblib.load("regressor.pkl")
 feature_order = joblib.load("feature_order.pkl")
-df = pd.read_csv("merged_dataset.csv")
 
-#  Clean column names — only strip spaces, never change case!
-df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
-df.rename(columns={"Value_fat": "Value_Fat", "Value_adm": "Value_Adm"}, inplace=True)
-df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
+# Load dataset for EDA only
+eda_df = pd.read_csv("merged_dataset.csv")
 
-# Extract dropdown options directly from your feature_order
+#  Load dataset that matches the model for prediction only
+predict_df = pd.read_csv("merged_featured.csv")
+
+#  Clean both consistently
+for df in [eda_df, predict_df]:
+    df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
+    df.rename(columns={"Value_fat": "Value_Fat", "Value_adm": "Value_Adm"}, inplace=True)
+    df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
+
+# Extra
 icd10_cols = [c for c in feature_order if c.startswith("ICD10 Diagnosis_")]
 diag_type_cols = [c for c in feature_order if c.startswith("Diagnosis Type_")]
 
 diagnosis_options = sorted({c.replace("ICD10 Diagnosis_", "") for c in icd10_cols})
 diagnosis_type_options = sorted({c.replace("Diagnosis Type_", "") for c in diag_type_cols})
 
-#TABS 
+#  TABS
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "📈 Predict"])
 
 # OVERVIEW
@@ -34,37 +42,38 @@ with tab1:
     st.header("📌 Project Overview")
     st.markdown(
         """
-        This dashboard analyzes **tobacco use**, **pricing**, **household income**, and **mortality trends** in the UK (2004–2015).
+        This dashboard uses **two datasets**:
+        - `merged_dataset.csv` → for detailed EDA trends.
+        - `merged_featured.csv` → for prediction, 100% aligned with the model.
 
-        👉 Predict **Death Rate**  
-        👉 Compare trends for **Male vs Female**
+        🔒 This guarantees you see trends **and** get valid predictions every time.
         """
     )
-    st.metric("Latest Smoking Prevalence (%)", df["Smoking Prevalence"].iloc[-1])
-    st.metric("Latest Tobacco Price Index", df["Tobacco Price Index"].iloc[-1])
-    st.metric("Latest Fatalities", df["Value_Fat"].dropna().iloc[-1])
+    st.metric("Latest Smoking Prevalence (%)", eda_df["Smoking Prevalence"].iloc[-1])
+    st.metric("Latest Tobacco Price Index", eda_df["Tobacco Price Index"].iloc[-1])
+    st.metric("Latest Fatalities", eda_df["Value_Fat"].dropna().iloc[-1])
 
-# EDA
+# EDA 
 with tab2:
-    st.header("📊 Exploratory Data Analysis")
+    st.header("📊 Exploratory Data Analysis (From `merged_dataset.csv`)")
 
     fig1, ax1 = plt.subplots(figsize=(6, 3))
-    sns.lineplot(data=df, x="Year", y="Smoking Prevalence", hue="Sex", marker="o", ax=ax1)
+    sns.lineplot(data=eda_df, x="Year", y="Smoking Prevalence", hue="Sex", marker="o", ax=ax1)
     ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
     fig2, ax2 = plt.subplots(figsize=(6, 3))
-    sns.lineplot(data=df, x="Year", y="Value_Adm", hue="Sex", marker="o", ax=ax2)
+    sns.lineplot(data=eda_df, x="Year", y="Value_Adm", hue="Sex", marker="o", ax=ax2)
     ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
     fig3, ax3 = plt.subplots(figsize=(6, 3))
-    sns.lineplot(data=df, x="Year", y="Value_Fat", hue="Sex", marker="o", ax=ax3)
+    sns.lineplot(data=eda_df, x="Year", y="Value_Fat", hue="Sex", marker="o", ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
     presc_trend = (
-        df.groupby(["Year", "Sex"])["All Pharmacotherapy Prescriptions"]
+        eda_df.groupby(["Year", "Sex"])["All Pharmacotherapy Prescriptions"]
         .mean().reset_index()
     )
 
@@ -74,9 +83,9 @@ with tab2:
     ax4.set_title("Average Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-# PREDICT TAB — FINAL VERSION
+# predict
 with tab3:
-    st.header("📈 Predict Death Rate")
+    st.header("📈 Predict Death Rate ")
 
     st.sidebar.header("Input Features")
 
@@ -91,52 +100,38 @@ with tab3:
     diag = st.sidebar.selectbox("ICD10 Diagnosis", diagnosis_options)
     diag_type = st.sidebar.selectbox("Diagnosis Type", diagnosis_type_options)
 
-    #  Build input DataFrame
-    
-st.set_page_config(page_title=" Final Test", layout="centered")
-st.title(" FINAL TEST — HARD CODED ROW")
+    X_input = pd.DataFrame({
+        "Smoking Prevalence": [smoking_prev],
+        "Tobacco Price Index": [tobacco_price],
+        "Retail Prices Index": [retail_price],
+        "Real Households' Disposable Income": [income],
+        "SmokingPrice_Interaction": [interaction],
+        "Sex_Male": [int(sex_male)],
+        "Policy_Era_Pre-2010": [int(policy_pre2010)],
+        "ICD10 Diagnosis": [diag],
+        "Diagnosis Type": [diag_type]
+    })
 
-# Load
-regressor = joblib.load("regressor.pkl")
-feature_order = joblib.load("feature_order.pkl")
+    X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
 
-# Exact test row
-X_input = pd.DataFrame({
-    "Smoking Prevalence": [23],
-    "Tobacco Price Index": [654.6],
-    "Retail Prices Index": [279.3],
-    "Real Households' Disposable Income": [188.7],
-    "SmokingPrice_Interaction": [15055.8],
-    "Sex_Male": [1],
-    "Policy_Era_Pre-2010": [1],
-    "ICD10 Diagnosis": ["All cancers"],
-    "Diagnosis Type": ["All cancers"]
-})
+    for col in feature_order:
+        if col not in X_input.columns:
+            X_input[col] = 0
 
-# Encode
-X_input = pd.get_dummies(X_input, columns=["ICD10 Diagnosis", "Diagnosis Type"])
+    X_input = X_input[feature_order].astype(float)
 
-# Fill missing
-for col in feature_order:
-    if col not in X_input.columns:
-        X_input[col] = 0
+    active_dummies = [col for col in X_input.columns if X_input[col].iloc[0] == 1 and ("ICD10" in col or "Diagnosis Type" in col)]
+    st.write("✅ Active ICD10/Diagnosis dummy columns:", active_dummies)
+    st.write("✅ Row sum:", X_input.sum(axis=1))
 
-X_input = X_input[feature_order].astype(float)
+    prediction = regressor.predict(X_input)[0]
+    st.subheader(f"📈 Predicted Death Rate: **{prediction:.4f}**")
 
-# Debug
-active_dummies = [c for c in X_input.columns if X_input[c].iloc[0] == 1]
-st.write(" Active dummies:", active_dummies)
-
-# Predict
-prediction = regressor.predict(X_input)[0]
-st.subheader(f" Final test prediction: {prediction:.4f}")
-
-
-    mean_fatalities = df["Value_Fat"].mean()
+    mean_fatalities = predict_df["Value_Fat"].mean()
     fig, ax = plt.subplots(figsize=(6, 3))
     ax.bar(["Predicted", "Historical Mean"], [prediction, mean_fatalities], color=["blue", "gray"])
     ax.set_ylabel("Death Rate")
-    ax.set_title("Predicted vs Historical Mean Death Rate")
+    ax.set_title("Predicted vs Historical Mean Death Rate (from `merged_featured.csv`)")
     st.pyplot(fig)
 
 st.write("---")
