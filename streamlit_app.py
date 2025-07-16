@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 # ----------------------------------------------------------
 # ✅ CONFIG
 # ----------------------------------------------------------
-st.set_page_config(page_title="🚬 Tobacco Use & Mortality ", layout="wide")
-st.title("🚬 Tobacco Use & Mortality — DASHBOARD")
+st.set_page_config(page_title="🚬 Tobacco Use & Mortality — Final", layout="wide")
+st.title("🚬 Tobacco Use & Mortality — FINAL DASHBOARD (Confirmed Value_fat)")
 
 # ----------------------------------------------------------
 # ✅ LOAD MODELS & DATA
@@ -22,16 +22,25 @@ df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 df = df.rename(columns=lambda x: x.replace(' ', '_'))
 df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
 
-# ✅ Extra engineered features
+# ✅ Check Value_fat casing
+if "Value_fat" in df.columns:
+    fatal_col = "Value_fat"
+elif "Value_Fat" in df.columns:
+    fatal_col = "Value_Fat"
+else:
+    st.error("❌ Value_fat column not found!")
+    st.stop()
+
+# ✅ Add helper features
 df["SmokingPrice_Interaction"] = df["Smoking_Prevalence"] * df["Tobacco_Price_Index"]
 df["Policy_Era_Pre-2010"] = (df["Year"] < 2010).astype(int)
 df["Sex_Male"] = df["Sex"].apply(lambda x: 1 if x == 'Male' else 0)
 
-if "Death_Rate" not in df.columns:
-    df["Death_Rate"] = df["Value_Fat"] / df["Value_adm"]
+# ✅ Create Death_Rate safely
+df["Death_Rate"] = df[fatal_col] / df["Value_adm"]
 
-# ✅ Debug columns
-st.write("✅ Loaded columns:", df.columns.tolist())
+# ✅ Show columns in app for verification
+st.write("✅ Final columns loaded:", df.columns.tolist())
 
 # ----------------------------------------------------------
 # ✅ ICD10 & Diagnosis Type options
@@ -55,7 +64,7 @@ with tab1:
     """)
     st.metric("Latest Smoking Prevalence (%)", df["Smoking_Prevalence"].iloc[-1])
     st.metric("Latest Tobacco Price Index", df["Tobacco_Price_Index"].iloc[-1])
-    st.metric("Latest Fatalities", df["Value_Fat"].dropna().iloc[-1])
+    st.metric("Latest Fatalities", df[fatal_col].dropna().iloc[-1])
 
 # ----------------------------------------------------------
 # ✅ EDA
@@ -74,7 +83,7 @@ with tab2:
     st.pyplot(fig2)
 
     fig3, ax3 = plt.subplots(figsize=(6, 3))
-    sns.lineplot(data=df, x="Year", y="Value_Fat", hue="Sex", marker="o", ax=ax3)
+    sns.lineplot(data=df, x="Year", y=fatal_col, hue="Sex", marker="o", ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
@@ -104,13 +113,10 @@ with tab3:
     diag = st.sidebar.selectbox("ICD10 Diagnosis", diagnosis_options)
     diag_type = st.sidebar.selectbox("Diagnosis Type", diagnosis_type_options)
 
-    diag = diag.strip()
-    diag_type = diag_type.strip()
-
     interaction = smoking_prev * tobacco_price
 
     if mode == "Raw Fatalities":
-        value_adm = st.sidebar.number_input("Admissions Count (Value_Adm)", 0, 5000000, 50000)
+        value_adm = st.sidebar.number_input("Admissions Count (Value_adm)", 0, 5000000, 50000)
     else:
         value_adm = None
 
@@ -132,14 +138,14 @@ with tab3:
     X_input = pd.DataFrame(input_data)
 
     st.info(f"🗂️ **Mode:** {mode}")
-    st.write("✅ Final input to pipeline:", X_input)
+    st.write("✅ Input preview:", X_input)
 
     if mode == "Death Rate":
         prediction = pipeline_rate.predict(X_input)[0]
         mean_val = df["Death_Rate"].mean()
     else:
         prediction = pipeline_fat.predict(X_input)[0]
-        mean_val = df["Value_Fat"].mean()
+        mean_val = df[fatal_col].mean()
 
     st.success(f"✅ Prediction: {prediction:.2f}")
 
