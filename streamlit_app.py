@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # ----------------------------------------------------------
 # ✅ CONFIG
 # ----------------------------------------------------------
-st.set_page_config(page_title="🚬 Tobacco & Mortality", layout="wide")
+st.set_page_config(page_title="🚬 Tobacco Use & Mortality ", layout="wide")
 st.title("🚬 Tobacco Use & Mortality — DASHBOARD")
 
 # ----------------------------------------------------------
@@ -22,20 +22,27 @@ df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 df = df.rename(columns=lambda x: x.replace(' ', '_'))
 df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
 
+# ✅ Extra engineered features
 df["SmokingPrice_Interaction"] = df["Smoking_Prevalence"] * df["Tobacco_Price_Index"]
 df["Policy_Era_Pre-2010"] = (df["Year"] < 2010).astype(int)
 df["Sex_Male"] = df["Sex"].apply(lambda x: 1 if x == 'Male' else 0)
 
 if "Death_Rate" not in df.columns:
-    df["Death_Rate"] = df["Value_fat"] / df["Value_adm"]
+    df["Death_Rate"] = df["Value_Fat"] / df["Value_adm"]
 
+# ✅ Debug columns
+st.write("✅ Loaded columns:", df.columns.tolist())
+
+# ----------------------------------------------------------
+# ✅ ICD10 & Diagnosis Type options
+# ----------------------------------------------------------
 diagnosis_options = sorted(df["ICD10_Diagnosis"].dropna().unique())
 diagnosis_type_options = sorted(df["Diagnosis_Type"].dropna().unique())
 
 # ----------------------------------------------------------
 # ✅ TABS
 # ----------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "🧮 Predict"])
+tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "📈 Predict"])
 
 # ----------------------------------------------------------
 # ✅ OVERVIEW
@@ -43,12 +50,12 @@ tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "🧮 Predict"])
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
-    This dashboard predicts **Death Rate** or **Raw Fatalities**.
-    ✅ Debug mode: shows **full input + raw prediction**.
+    This dashboard predicts **Death Rate** or **Raw Fatalities**  
+    for tobacco use & mortality in the UK (2004–2015).
     """)
     st.metric("Latest Smoking Prevalence (%)", df["Smoking_Prevalence"].iloc[-1])
     st.metric("Latest Tobacco Price Index", df["Tobacco_Price_Index"].iloc[-1])
-    st.metric("Latest Fatalities", df["Value_fat"].dropna().iloc[-1])
+    st.metric("Latest Fatalities", df["Value_Fat"].dropna().iloc[-1])
 
 # ----------------------------------------------------------
 # ✅ EDA
@@ -58,24 +65,31 @@ with tab2:
 
     fig1, ax1 = plt.subplots(figsize=(6, 3))
     sns.lineplot(data=df, x="Year", y="Smoking_Prevalence", hue="Sex", marker="o", ax=ax1)
-    ax1.set_title("Smoking Prevalence by Sex")
+    ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
     fig2, ax2 = plt.subplots(figsize=(6, 3))
     sns.lineplot(data=df, x="Year", y="Value_adm", hue="Sex", marker="o", ax=ax2)
-    ax2.set_title("Admissions by Sex")
+    ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
     fig3, ax3 = plt.subplots(figsize=(6, 3))
-    sns.lineplot(data=df, x="Year", y="Value_fat", hue="Sex", marker="o", ax=ax3)
-    ax3.set_title("Fatalities by Sex")
+    sns.lineplot(data=df, x="Year", y="Value_Fat", hue="Sex", marker="o", ax=ax3)
+    ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
+    presc_trend = df.groupby(["Year", "Sex"])["All_Pharmacotherapy_Prescriptions"].mean().reset_index()
+    fig4, ax4 = plt.subplots(figsize=(6, 3))
+    sns.lineplot(data=presc_trend, x="Year", y="All_Pharmacotherapy_Prescriptions",
+                 hue="Sex", marker="o", ax=ax4)
+    ax4.set_title("Average Prescriptions Over Time by Sex")
+    st.pyplot(fig4)
+
 # ----------------------------------------------------------
-# ✅ PREDICT (DEBUG)
+# ✅ PREDICT TAB
 # ----------------------------------------------------------
 with tab3:
-    st.header("🧮 Predict")
+    st.header("📈 Predict")
 
     st.sidebar.header("Prediction Mode")
     mode = st.sidebar.radio("Choose Prediction:", ["Death Rate", "Raw Fatalities"])
@@ -90,7 +104,6 @@ with tab3:
     diag = st.sidebar.selectbox("ICD10 Diagnosis", diagnosis_options)
     diag_type = st.sidebar.selectbox("Diagnosis Type", diagnosis_type_options)
 
-    # ✅ Fix casing to match training data
     diag = diag.strip()
     diag_type = diag_type.strip()
 
@@ -101,7 +114,6 @@ with tab3:
     else:
         value_adm = None
 
-    # ✅ Input DataFrame
     input_data = {
         "Smoking_Prevalence": [smoking_prev],
         "Tobacco_Price_Index": [tobacco_price],
@@ -120,18 +132,16 @@ with tab3:
     X_input = pd.DataFrame(input_data)
 
     st.info(f"🗂️ **Mode:** {mode}")
-    st.write("✅ Final input to pipeline:")
-    st.write(X_input)
+    st.write("✅ Final input to pipeline:", X_input)
 
-    # ✅ Predict
     if mode == "Death Rate":
         prediction = pipeline_rate.predict(X_input)[0]
         mean_val = df["Death_Rate"].mean()
     else:
         prediction = pipeline_fat.predict(X_input)[0]
-        mean_val = df["Value_fat"].mean()
+        mean_val = df["Value_Fat"].mean()
 
-    st.success(f"✅ Raw prediction: {prediction:.4f}")
+    st.success(f"✅ Prediction: {prediction:.2f}")
 
     fig, ax = plt.subplots(figsize=(6, 3))
     ax.bar(["Predicted", "Historical Mean"], [prediction, mean_val], color=["blue", "gray"])
