@@ -5,15 +5,11 @@ import joblib
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# ----------------------------------------------------------
-# ✅ CONFIG
-# ----------------------------------------------------------
-st.set_page_config(page_title="🚬 Tobacco Use & Mortality — Final", layout="wide")
-st.title("🚬 Tobacco Use & Mortality — FINAL DASHBOARD (Confirmed Value_fat)")
+#  CONFIG
+st.set_page_config(page_title="🚬 Tobacco Use & Mortality", layout="wide")
+st.title("🚬 Tobacco Use & Mortality LIVE DASHBOARD")
 
-# ----------------------------------------------------------
-# ✅ LOAD MODELS & DATA
-# ----------------------------------------------------------
+# LOAD MODELS & DATA
 pipeline_rate = joblib.load("pipeline_regressor_rate.pkl")
 pipeline_fat = joblib.load("pipeline_regressor_fatality.pkl")
 
@@ -22,7 +18,7 @@ df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
 df = df.rename(columns=lambda x: x.replace(' ', '_'))
 df["Sex"] = df["Sex"].astype(str).str.strip().str.title()
 
-# ✅ Check Value_fat casing
+#  Confirm Value_fat casing
 if "Value_fat" in df.columns:
     fatal_col = "Value_fat"
 elif "Value_Fat" in df.columns:
@@ -31,74 +27,80 @@ else:
     st.error("❌ Value_fat column not found!")
     st.stop()
 
-# ✅ Add helper features
+#  Add helper features
 df["SmokingPrice_Interaction"] = df["Smoking_Prevalence"] * df["Tobacco_Price_Index"]
 df["Policy_Era_Pre-2010"] = (df["Year"] < 2010).astype(int)
 df["Sex_Male"] = df["Sex"].apply(lambda x: 1 if x == 'Male' else 0)
 
-# ✅ Create Death_Rate safely
+#  Create Death_Rate safely
 df["Death_Rate"] = df[fatal_col] / df["Value_adm"]
 
-# ✅ Show columns in app for verification
-st.write("✅ Final columns loaded:", df.columns.tolist())
+#  Debug (commented)
+# st.write(" Final columns loaded:", df.columns.tolist())
 
-# ----------------------------------------------------------
-# ✅ ICD10 & Diagnosis Type options
-# ----------------------------------------------------------
+#  ICD10 & Diagnosis Type options
 diagnosis_options = sorted(df["ICD10_Diagnosis"].dropna().unique())
 diagnosis_type_options = sorted(df["Diagnosis_Type"].dropna().unique())
 
-# ----------------------------------------------------------
-# ✅ TABS
-# ----------------------------------------------------------
+#  TABS
 tab1, tab2, tab3 = st.tabs(["📌 Overview", "📊 EDA", "📈 Predict"])
 
-# ----------------------------------------------------------
-# ✅ OVERVIEW
-# ----------------------------------------------------------
+# OVERVIEW
 with tab1:
     st.header("📌 Project Overview")
     st.markdown("""
     This dashboard predicts **Death Rate** or **Raw Fatalities**  
     for tobacco use & mortality in the UK (2004–2015).
     """)
+
     st.metric("Latest Smoking Prevalence (%)", df["Smoking_Prevalence"].iloc[-1])
     st.metric("Latest Tobacco Price Index", df["Tobacco_Price_Index"].iloc[-1])
     st.metric("Latest Fatalities", df[fatal_col].dropna().iloc[-1])
 
-# ----------------------------------------------------------
-# ✅ EDA
-# ----------------------------------------------------------
+# EDA
 with tab2:
     st.header("📊 Exploratory Data Analysis")
 
-    fig1, ax1 = plt.subplots(figsize=(6, 3))
+    st.info("""
+    **Key Metrics Explained:**
+    - **Admissions:** People admitted for smoking-related conditions.
+    - **Fatalities:** Total actual deaths.
+    - **Death Rate:** Fatalities divided by admissions.
+    """)
+
+    fig1, ax1 = plt.subplots(figsize=(5, 3))
     sns.lineplot(data=df, x="Year", y="Smoking_Prevalence", hue="Sex", marker="o", ax=ax1)
     ax1.set_title("Smoking Prevalence Over Time by Sex")
     st.pyplot(fig1)
 
-    fig2, ax2 = plt.subplots(figsize=(6, 3))
+    fig2, ax2 = plt.subplots(figsize=(5, 3))
     sns.lineplot(data=df, x="Year", y="Value_adm", hue="Sex", marker="o", ax=ax2)
     ax2.set_title("Admissions Over Time by Sex")
     st.pyplot(fig2)
 
-    fig3, ax3 = plt.subplots(figsize=(6, 3))
+    fig3, ax3 = plt.subplots(figsize=(5, 3))
     sns.lineplot(data=df, x="Year", y=fatal_col, hue="Sex", marker="o", ax=ax3)
     ax3.set_title("Fatalities Over Time by Sex")
     st.pyplot(fig3)
 
     presc_trend = df.groupby(["Year", "Sex"])["All_Pharmacotherapy_Prescriptions"].mean().reset_index()
-    fig4, ax4 = plt.subplots(figsize=(6, 3))
+    fig4, ax4 = plt.subplots(figsize=(5, 3))
     sns.lineplot(data=presc_trend, x="Year", y="All_Pharmacotherapy_Prescriptions",
                  hue="Sex", marker="o", ax=ax4)
     ax4.set_title("Average Prescriptions Over Time by Sex")
     st.pyplot(fig4)
 
-# ----------------------------------------------------------
-# ✅ PREDICT TAB
-# ----------------------------------------------------------
+# PREDICT TAB
+
 with tab3:
     st.header("📈 Predict")
+
+    st.info("""
+    **Prediction Modes:**
+
+    - 📈 **Death Rate:** Percentage of deaths per admissions.
+    - ⚰️ **Raw Fatalities:** Estimated total deaths.
+    """)
 
     st.sidebar.header("Prediction Mode")
     mode = st.sidebar.radio("Choose Prediction:", ["Death Rate", "Raw Fatalities"])
@@ -137,7 +139,6 @@ with tab3:
 
     X_input = pd.DataFrame(input_data)
 
-    st.info(f"🗂️ **Mode:** {mode}")
     st.write("✅ Input preview:", X_input)
 
     if mode == "Death Rate":
@@ -149,7 +150,7 @@ with tab3:
 
     st.success(f"✅ Prediction: {prediction:.2f}")
 
-    fig, ax = plt.subplots(figsize=(6, 3))
+    fig, ax = plt.subplots(figsize=(5, 3))
     ax.bar(["Predicted", "Historical Mean"], [prediction, mean_val], color=["blue", "gray"])
     ax.set_title(f"{mode}: Predicted vs Historical Mean")
     ax.set_ylabel(mode)
