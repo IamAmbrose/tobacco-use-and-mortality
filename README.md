@@ -1,5 +1,12 @@
 # 🚬 Tobacco Use and Mortality (2004–2015) — ML & Data Analysis Project
 
+[![Streamlit](https://img.shields.io/badge/Live%20App-Streamlit-brightgreen?logo=streamlit)](https://tobacco-use-and-mortality-sjw2jdt3fk5xy5tuypkn9e.streamlit.app/)
+[![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)](https://www.python.org/)
+[![Repo](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/IamAmbrose/tobacco-use-and-mortality)
+
+---
+
+
 This project analyzes the relationship between tobacco use, economic factors, and mortality rates in the UK from **2004–2015**.  
 It combines **data cleaning, exploratory analysis, feature engineering, machine learning**, and a **live Streamlit dashboard** to predict and explain mortality patterns related to smoking.
 
