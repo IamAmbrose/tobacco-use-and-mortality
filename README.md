@@ -6,92 +6,90 @@
 
 ---
 
-
-This project analyzes the relationship between tobacco use, economic factors, and mortality rates in the UK from **2004–2015**.  
-It combines **data cleaning, exploratory analysis, feature engineering, machine learning**, and a **live Streamlit dashboard** to predict and explain mortality patterns related to smoking.
+This project analyzes the relationship between **tobacco use**, **pricing**, **income**, and **mortality** in the UK (2004–2015).  
+It combines **data cleaning**, **EDA**, **feature engineering**, **machine learning**, and an **interactive Streamlit dashboard** for real-time scenario testing.
 
 ---
 
-## 📈 **Project Objectives**
+## 🎯 **Project Objectives**
 
-- Analyze trends in tobacco use, price indices, income, and mortality.
-- Predict **mortality rate (`Death_Rate`)** using regression.
-- Classify diagnoses into **High vs Low Fatality** based on historical fatality counts.
-- Deploy an **interactive web app** for real-time scenario testing.
+- Analyze trends: smoking prevalence, pricing, income, admissions, fatalities.
+- Predict **Death Rate** (*fatalities per admissions*).
+- Predict **Raw Fatalities** (*total estimated deaths*).
+- Deploy a **live Streamlit app** with clear inputs & visuals.
 
 ---
 
 ## 🗂️ **Data Sources**
 
-- Annual survey and administrative health data covering:
+- Annual UK surveys & administrative health data:
   - Smoking prevalence
-  - Tobacco Price Index & Retail Prices Index
+  - Tobacco Price Index, Retail Prices Index
   - Real household disposable income
-  - ICD10 diagnoses
-  - Admissions & fatalities (`Value_adm`, `Value_fat`)
-  - Engineered interaction features
+  - ICD10 diagnoses & types
+  - Admissions (`Value_adm`)
+  - Fatalities (`Value_fat`)
+  - Derived features: `SmokingPrice_Interaction`
 
 ---
 
-## 🔬 **Processes**
+## 🔍 **Key Processing**
 
-### ✅ 1. Data Cleaning & Preparation
-- Removed missing target rows for both regression and classification tasks.
-- Cleaned column names to fix hidden line breaks (`\n`, `\r`).
-- Encoded categorical variables (`ICD10 Diagnosis`, `Diagnosis Type`).
-- Standardized numeric features for ML modeling.
+1️⃣ **Cleaning**
+- Renamed columns for consistency (handled `Value_fat` variations).
+- Standardized casing, stripped spaces, fixed line breaks.
 
-### ✅ 2. Feature Engineering
-- Created `SmokingPrice_Interaction` to capture the combined impact of smoking prevalence and price.
-- Binarized `Value_fat` into `High_Fatality` class using the median.
+2️⃣ **Feature Engineering**
+- `SmokingPrice_Interaction` to capture price & usage effect.
+- Binary feature: `Policy_Era_Pre-2010`.
 
-### ✅ 3. Exploratory Analysis
-- Confirmed trends: increasing tobacco prices, declining smoking rates.
-- Noted high fatality risk in cancers & circulatory diseases.
-- Detected clear correlations between price, prevalence, and mortality.
+3️⃣ **Model Training**
+- **Death Rate**
+  - Pipeline RMSE: ~0.03
+  - R²: ~0.97
+- **Raw Fatalities**
+  - Pipeline RMSE: ~1784.58
+  - R²: ~0.99
 
-### ✅ 4. Model Training
-- **Regression:**
-  - Linear Regression RMSE: **3967.65**, R²: **0.9971**
-  - Random Forest RMSE: **2466.61**, R²: **0.9989**
-- **Classification:**
-  - Random Forest Accuracy: **98%**
-  - ROC AUC: **0.9993**
-  - Confusion Matrix:
-    ```
-    [[67  0]
-     [ 3 80]]
-    ```
-  - Precision, Recall, F1 all at **0.98+**
-
-### ✅ 5. Deployment
-- Packaged as a **Streamlit app** with:
-  - Mode switch: Regression or Classification
-  - User inputs for all key factors
-  - Real-time predictions with **SHAP** explanations for feature impact
+4️⃣ **Deployment**
+- Streamlit app with tabs:
+  - 📌 Overview
+  - 📊 EDA
+  - 📈 Predict (Death Rate or Raw Fatalities)
 
 ---
 
-## 🏆 **Key Insights**
+## 📊 **Key Insights**
 
-- Mortality rates strongly depend on:
-  - Smoking prevalence & intensity
-  - Tobacco pricing
-  - Household income
-  - Policy era & demographics
-  - Specific diagnoses
-
-- Effective pricing & policy can reduce smoking prevalence and lower smoking-related deaths.
+- Higher tobacco prices reduce smoking prevalence.
+- Lower smoking prevalence reduces admissions and mortality.
+- Mortality risks vary by **diagnosis type** & **policy era**.
+- Gender differences are visible in trends.
+- Clear interaction between pricing and household income.
 
 ---
 
-## 📌 **Project Performance**
+## 🧩 **Streamlit Dashboard**
 
-| Model | RMSE | R² | Accuracy | ROC AUC |
-|-------|------|-----|----------|---------|
-| Linear Regression | 3967.65 | 0.9971 | — | — |
-| Random Forest Regression | 2466.61 | 0.9989 | — | — |
-| Random Forest Classification | — | — | 98% | 0.9993 |
+**Features:**
+- Medium-sized visuals for Smoking Prevalence, Admissions, Fatalities, Prescriptions.
+- Interactive input sliders, radio buttons, dropdowns for:
+  - Smoking prevalence, pricing, income.
+  - ICD10 Diagnosis & Type.
+  - Sex & Policy Era.
+- **Prediction Modes:**
+  - **Death Rate**: expected deaths per admission.
+  - **Raw Fatalities**: total expected number of deaths.
+- Visual bar chart comparing prediction vs historical mean.
+
+---
+
+## ⚙️ **How to Run**
+
+1️⃣ Install:
+```bash
+pip install -r requirements.txt
+
 
 ---
 
